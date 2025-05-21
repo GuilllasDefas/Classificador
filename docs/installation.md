@@ -100,6 +100,7 @@ Certifique-se de que os formatos de imagem que você está tentando classificar 
 ### Outros Erros
 
 Se encontrar outros erros, verifique:
+
 - Se você está usando uma versão compatível do Python
 - Se todas as dependências estão instaladas corretamente
 - Se o caminho do arquivo contém caracteres especiais ou não-ASCII

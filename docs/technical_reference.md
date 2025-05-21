@@ -35,6 +35,7 @@ Responsável pelo gerenciamento de arquivos e operações com imagens.
 
 Implementa a interface gráfica principal do aplicativo.
 
+
 #### Métodos
 
 | Método | Descrição |

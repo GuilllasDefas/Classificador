@@ -6,7 +6,6 @@ O Classificador de Imagens é organizado em uma estrutura modular que separa cla
 
 ## Árvore de Diretórios
 
-```
 e:\Py_Projetos\Classificador\
 ├── main.py                 # Arquivo principal do aplicativo
 ├── models\                 # Gerenciamento de dados e lógica de negócios
@@ -24,7 +23,6 @@ e:\Py_Projetos\Classificador\
     ├── technical_reference.md  # Documentação técnica
     ├── installation.md     # Guia de instalação
     └── structure.md        # Este documento
-```
 
 ## Descrição dos Componentes
 

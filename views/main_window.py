@@ -1,8 +1,20 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import os
+import sys
 
 from models.image_manager import ImageManager
 from utils.image_utils import ImageProcessor
+
+def resource_path(relative_path):
+    """Obter caminho absoluto para recurso, funciona para dev e para PyInstaller"""
+    try:
+        # PyInstaller cria uma pasta temp e armazena o caminho em _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
 
 class MainWindow:
     """Classe principal da interface gráfica"""
@@ -10,7 +22,14 @@ class MainWindow:
     def __init__(self, root):
         self.root = root
         self.root.title("Classificador de Imagens")
-        self.root.geometry("1200x900")
+        self.root.geometry("1600x900")
+        
+        # Carregar ícone com tratamento de erro
+        try:
+            icon_path = resource_path("assets/icon.ico")
+            self.root.iconbitmap(icon_path)
+        except Exception as e:
+            print(f"Não foi possível carregar o ícone: {e}")
         
         # Cores e estilo
         self.bg_color = "#23272e"

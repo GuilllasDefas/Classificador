@@ -14,16 +14,35 @@ class ImageManager:
         self.imagem_atual_caminho = None
     
     def selecionar_pasta(self, pasta):
-        """Define a pasta de origem e cria as subpastas necessárias"""
+        """Seleciona a pasta contendo as imagens e configura as pastas de destino"""
+        # Normalizar o caminho para evitar mistura de / e \
+        pasta = os.path.normpath(pasta)
         self.pasta_origem = pasta
-        if not self.pasta_origem:
-            return False
-            
-        os.makedirs(os.path.join(self.pasta_origem, "certo"), exist_ok=True)
-        os.makedirs(os.path.join(self.pasta_origem, "errado"), exist_ok=True)
         
-        self.carregar_imagens()
-        return len(self.arquivos_imagem) > 0
+        # Criar diretórios de classificação se não existirem
+        self.pasta_certo = os.path.join(pasta, 'certo')
+        self.pasta_errado = os.path.join(pasta, 'errado')
+        
+        try:
+            # Verificar se o diretório pai realmente existe
+            if not os.path.exists(pasta):
+                raise FileNotFoundError(f"O diretório selecionado não existe: {pasta}")
+            
+            # Criar diretórios com verificação de existência
+            if not os.path.exists(self.pasta_certo):
+                os.makedirs(self.pasta_certo, exist_ok=True)
+            
+            if not os.path.exists(self.pasta_errado):
+                os.makedirs(self.pasta_errado, exist_ok=True)
+                
+            # Carregar os arquivos de imagem da pasta
+            self.carregar_imagens()
+            return len(self.arquivos_imagem) > 0
+            
+        except Exception as e:
+            print(f"Erro ao configurar pastas: {e}")
+            messagebox.showerror("Erro", f"Não foi possível configurar as pastas: {str(e)}")
+            return False
     
     def carregar_imagens(self):
         """Carrega as imagens da pasta selecionada"""
