@@ -1,79 +1,32 @@
 permissions:
   contents: write
 
-# .github/workflows/build.yml
 name: Build e Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   release:
     runs-on: windows-latest
-    env:
-      VERSION: v1.0.2
-
     steps:
-      # 1) Puxa o código
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # 2) Seta Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-
-      # 3) Instala dependências e PyInstaller
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-
-      # 4) Gera o .exe usando o arquivo .spec
-      - name: Build EXE com arquivo .spec
-        run: pyinstaller "classificador_de_Imagens.spec"
-
-      # 5) Empacota num ZIP
-      - name: Zip App
-        run: Compress-Archive -Path "dist\Classificador de Imagens\*" -DestinationPath "Classificador-de-Imagens.zip"
-        
-      # 6) Cria uma tag automática
-      - name: Criar tag automática
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git tag -a ${{ env.VERSION }} -m "Release automática ${{ env.VERSION }}"
-          git push origin ${{ env.VERSION }}
-
-      # 7) Cria a Release
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+          
+      - run: pip install -r requirements.txt
+      
+      - run: pyinstaller "classificador_de_Imagens.spec"
+      
+      - run: Compress-Archive -Path "dist\Classificador de Imagens\*" -DestinationPath "app.zip"
+      
+      - uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
-          body: |
-            # Classificador de Imagens v1.0.2
-            
-            --
-            ##  v1.0.2 - Correção
-            - Corrigido bug no updater de looping de atualização.
-
-          draft: false
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 8) Anexa o ZIP à Release criada
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: Classificador-de-Imagens.zip
-          asset_name: Classificador-de-Imagens-${{ env.VERSION }}.zip
-          asset_content_type: application/zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          title: "Latest Build"
+          files: "app.zip"
