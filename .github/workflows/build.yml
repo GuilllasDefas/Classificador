@@ -13,7 +13,7 @@ jobs:
   release:
     runs-on: windows-latest
     env:
-      VERSION: v1.0.0
+      VERSION: v1.0.1
 
     steps:
       # 1) Puxa o código
@@ -56,21 +56,11 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
           body: |
-            # Classificador de Imagens v1.0.0
+            # Classificador de Imagens v1.0.1
             
-            Um aplicativo para classificação manual de imagens em categorias "certo" e "errado".
-            
-            ## Características
-            - Interface gráfica simples
-            - Classificação rápida com atalhos de teclado
-            - Organização automática em pastas
-            - Estatísticas de classificação
-            
-            ## Como usar
-            1. Baixe e extraia o arquivo ZIP
-            2. Execute `Classificador de Imagens.exe`
-            3. Selecione uma pasta com imagens
-            4. Classifique as imagens como "certo" ou "errado"
+            --
+            ##  v1.0.1 - Melhorias
+            - Adicionada updater para facilitar atualizações futuras.
 
           draft: false
           prerelease: false
