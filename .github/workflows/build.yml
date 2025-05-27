@@ -1,3 +1,6 @@
+permissions:
+  contents: write
+
 # .github/workflows/build.yml
 name: Build e Release
 
