@@ -13,7 +13,7 @@ class AutoUpdater:
         # Configurações do seu repositório GitHub
         self.repo_owner = "GuilllasDefas"  # Substitua pelo seu usuário
         self.repo_name = "Classificador"     # Substitua pelo nome do repo
-        self.current_version = "1.0.0"          # Versão atual do app
+        self.current_version = "1.0.2"          # Versão atual do app
         self.debug = True  # ← Ativar/desativar debug
         
     def verificar_atualizacao(self):
