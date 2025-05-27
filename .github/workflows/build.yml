@@ -4,12 +4,11 @@ permissions:
 # .github/workflows/build.yml
 name: Build e Release
 
-# Só roda quando você criar uma tag tipo v1.0.0
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Permite executar manualmente
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main          # Roda em push para main
 
 jobs:
   release:
@@ -19,44 +18,64 @@ jobs:
       # 1) Puxa o código
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      # 2) Gera número de versão automático baseado na data
+      - name: Gerar número de versão
+        id: version
+        run: |
+          $data = Get-Date -Format "yyyy.MM.dd"
+          $buildNumber = $env:GITHUB_RUN_NUMBER
+          $versao = "v$data.$buildNumber"
+          echo "VERSION=$versao" >> $env:GITHUB_ENV
+          echo "Versão gerada: $versao"
 
-      # 2) Seta Python
+      # 3) Seta Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: '3.12.9'
 
-      # 3) Instala dependências e PyInstaller
+      # 4) Instala dependências e PyInstaller
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      # 4) Gera o .exe usando o arquivo .spec
+      # 5) Gera o .exe usando o arquivo .spec
       - name: Build EXE com arquivo .spec
         run: pyinstaller "classificador_de_Imagens.spec"
 
-      # 5) Empacota num ZIP
+      # 6) Empacota num ZIP
       - name: Zip App
         run: Compress-Archive -Path "dist\Classificador de Imagens\*" -DestinationPath "Classificador-de-Imagens.zip"
-
-      # 6) Cria a Release
+        
+      # 7) Cria uma tag automática
+      - name: Criar tag automática
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a ${{ env.VERSION }} -m "Release automática ${{ env.VERSION }}"
+          git push origin ${{ env.VERSION }}
+          
+      # 8) Cria a Release
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
           draft: true
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 7) Anexa o ZIP à Release criada
+      # 9) Anexa o ZIP à Release criada
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: Classificador-de-Imagens.zip
-          asset_name: Classificador-de-Imagens-${{ github.ref_name }}.zip
+          asset_name: Classificador-de-Imagens-${{ env.VERSION }}.zip
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
