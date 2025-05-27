@@ -1,0 +1,35 @@
+name: Build e Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # só roda quando subir uma tag tipo v1.0.0
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v3
+
+      - name: Instalar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'  # Simplificado para evitar problemas de versão específica
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build com PyInstaller
+        run: pyinstaller "classificador_de_Imagens.spec"  # Usar o arquivo .spec existente
+
+      - name: Criar ZIP
+        run: Compress-Archive -Path "dist\classificador_de_Imagens" -DestinationPath "classificador_de_Imagens.zip"
+
+      - name: Publicar como Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: classificador_de_Imagens_windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
