@@ -5,10 +5,9 @@ permissions:
 name: Build e Release
 
 on:
-  workflow_dispatch:  # Permite executar manualmente
   push:
     branches:
-      - main          # Roda em push para main
+      - main
 
 jobs:
   release:
