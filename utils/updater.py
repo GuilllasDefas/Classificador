@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import threading
 from tkinter import messagebox
+from packaging import version
 
 class AutoUpdater:
     def __init__(self):
@@ -25,22 +26,32 @@ class AutoUpdater:
             
             if response.status_code == 200:
                 release_info = response.json()
-                versao_nova = release_info['tag_name'].replace('v', '')  # Remove 'v' se tiver
+                versao_github = release_info['tag_name']
                 
-                if self.debug:  # ← Adicione estas linhas de debug
-                    print(f"DEBUG: Versão atual: {self.current_version}")
-                    print(f"DEBUG: Versão no GitHub: {versao_nova}")
+                # Remove 'v' se existir e limpa espaços
+                versao_nova = versao_github.replace('v', '').strip()
+                versao_atual = self.current_version.strip()
                 
-                # Compara versões (simplificado)
-                if versao_nova != self.current_version:
-                    if self.debug:
-                        print("DEBUG: Atualização disponível!")
-                    return True, release_info
-                else:
-                    if self.debug:  # ← Esta é a linha que você queria
-                        print("DEBUG: Nenhuma atualização disponível - app está na versão mais recente")
+                if self.debug:
+                    print(f"DEBUG: Versão atual: '{versao_atual}'")
+                    print(f"DEBUG: Versão no GitHub: '{versao_github}' -> '{versao_nova}'")
+                
+                # Compara versões usando packaging
+                try:
+                    if version.parse(versao_nova) > version.parse(versao_atual):
+                        if self.debug:
+                            print("DEBUG: Atualização disponível!")
+                        return True, release_info
+                    else:
+                        if self.debug:
+                            print("DEBUG: Nenhuma atualização disponível - app está na versão mais recente")
+                        return False, None
+                except:
+                    # Se der erro no parse, faz comparação simples
+                    if versao_nova != versao_atual:
+                        return True, release_info
                     return False, None
-                    
+                
             else:
                 if self.debug:
                     print(f"DEBUG: Erro HTTP {response.status_code} ao verificar atualizações")
@@ -49,8 +60,6 @@ class AutoUpdater:
         except Exception as e:
             if self.debug:
                 print(f"DEBUG: Erro ao verificar atualização: {e}")
-            else:
-                print(f"Erro ao verificar atualização: {e}")  # Esta linha já existia
             return False, None
     
     def perguntar_se_quer_atualizar(self, release_info):
