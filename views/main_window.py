@@ -1,160 +1,170 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 import os
 import sys
 
 from models.image_manager import ImageManager
 from utils.image_utils import ImageProcessor
+from utils.ui_helpers import UIHelpers
+from utils.error_handler import ErrorHandler
+from mixins.keyboard_mixin import KeyboardMixin
+from constants.app_constants import (
+    WindowConfig, Colors, Fonts, Padding, ButtonConfig, Messages
+)
 
 def resource_path(relative_path):
     """Obter caminho absoluto para recurso, funciona para dev e para PyInstaller"""
     try:
-        # PyInstaller cria uma pasta temp e armazena o caminho em _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-    
     return os.path.join(base_path, relative_path)
 
-class MainWindow:
+class MainWindow(KeyboardMixin):
     """Classe principal da interface gráfica"""
     
     def __init__(self, root):
         self.root = root
-        self.root.title("Classificador de Imagens")
-        self.root.geometry("1600x900")
-        
-        # Carregar ícone com tratamento de erro
-        try:
-            icon_path = resource_path("assets/icon.ico")
-            self.root.iconbitmap(icon_path)
-        except Exception as e:
-            print(f"Não foi possível carregar o ícone: {e}")
-        
-        # Cores e estilo
-        self.bg_color = "#23272e"
-        self.fg_color = "#f0f0f0"
-        self.button_certo_color = "#2ecc40"
-        self.button_errado_color = "#e74c3c"
-        self.button_hover = "#555"
-        self.status_bg = "#181a1b"
-        self.label_img_bg = "#181a1b"
-        self.label_img_fg = "#ffd700"
-        
-        # Inicializa o gerenciador de imagens
         self.image_manager = ImageManager()
         
-        # Configurar a interface
-        self.configurar_interface()
-        
-        # Atalhos de teclado
+        self._configurar_janela()
+        self._configurar_interface()
         self.configurar_atalhos()
     
-    def configurar_interface(self):
+    def _configurar_janela(self):
+        """Configura as propriedades básicas da janela"""
+        self.root.title(WindowConfig.TITLE)
+        self.root.geometry(WindowConfig.GEOMETRY)
+        self.root.resizable(True, True)
+        self._carregar_icone()
+    
+    def _carregar_icone(self):
+        """Carrega o ícone da aplicação"""
+        try:
+            icon_path = resource_path(WindowConfig.ICON_PATH)
+            self.root.iconbitmap(icon_path)
+        except Exception as e:
+            ErrorHandler.handle_icon_error(e)
+    
+    def _configurar_interface(self):
         """Configura os componentes da interface gráfica"""
-        # Label do nome da imagem acima da imagem
-        self.label_nome_imagem = tk.Label(
-            self.root, text="", font=("Arial", 16, "bold"),
-            bg=self.label_img_bg, fg=self.label_img_fg, pady=10
+        self._criar_label_nome_imagem()
+        self._criar_frame_imagem()
+        self._criar_frame_botoes()
+        self._criar_label_status()
+    
+    def _criar_label_nome_imagem(self):
+        """Cria o label para o nome da imagem"""
+        self.label_nome_imagem = UIHelpers.create_styled_label(
+            self.root, bg_color=Colors.IMAGE_LABEL_BACKGROUND,
+            fg_color=Colors.IMAGE_LABEL_FOREGROUND, font=Fonts.IMAGE_NAME,
+            pady=Padding.TOP_LABEL
         )
-        self.label_nome_imagem.pack(side=tk.TOP, fill=tk.X, padx=0, pady=(10, 0))
-
-        # Frame para exibição da imagem
-        self.frame_imagem = tk.Frame(self.root, bg=self.bg_color)
-        self.frame_imagem.pack(fill=tk.BOTH, expand=True, padx=30, pady=(0, 10))
-
-        # Label para exibir a imagem
-        self.label_imagem = tk.Label(self.frame_imagem, bg=self.bg_color)
+        self.label_nome_imagem.pack(side=tk.TOP, fill=tk.X, padx=0, pady=(Padding.TOP_LABEL, 0))
+    
+    def _criar_frame_imagem(self):
+        """Cria o frame para exibição da imagem"""
+        self.frame_imagem = UIHelpers.create_styled_frame(self.root)
+        self.frame_imagem.pack(fill=tk.BOTH, expand=True, padx=Padding.MAIN, pady=(0, Padding.TOP_LABEL))
+        
+        self.label_imagem = UIHelpers.create_styled_label(self.frame_imagem)
         self.label_imagem.pack(fill=tk.BOTH, expand=True)
-
-        # Frame para botões centralizados abaixo da imagem
-        self.frame_botoes = tk.Frame(self.root, bg=self.bg_color)
-        self.frame_botoes.pack(fill=tk.X, padx=30, pady=(0, 25))
-
-        # Configurar botões
-        self.configurar_botoes()
-
-        # Label de status
+    
+    def _criar_frame_botoes(self):
+        """Cria o frame para os botões"""
+        self.frame_botoes = UIHelpers.create_styled_frame(self.root)
+        self.frame_botoes.pack(fill=tk.X, padx=Padding.MAIN, pady=(0, 25))
+        self._configurar_todos_botoes()
+    
+    def _get_button_configs(self):
+        """Retorna configuração centralizada de todos os botões"""
+        return [
+            {
+                'name': 'botao_voltar',
+                'text': "⟵ Voltar\n[Backspace]",
+                'command': self.voltar_imagem,
+                'state': tk.DISABLED,
+                'expand': True
+            },
+            {
+                'name': 'botao_selecionar',
+                'text': "Selecionar Pasta",
+                'command': self.selecionar_pasta,
+                'width': ButtonConfig.WIDTH_SELECT,
+                'expand': True
+            },
+            {
+                'name': 'botao_abrir_pasta',
+                'text': "Abrir Pasta",
+                'command': self.abrir_pasta,
+                'expand': True
+            },
+            {
+                'name': 'botao_certo',
+                'text': "✔ Certo\n[Enter/→]",
+                'command': lambda: self.mover_imagem("certo"),
+                'state': tk.DISABLED,
+                'bg_color': Colors.BUTTON_CORRECT,
+                'fg_color': "white",
+                'hover_color': Colors.BUTTON_CORRECT_HOVER,
+                'expand': True
+            },
+            {
+                'name': 'botao_errado',
+                'text': "✖ Errado\n[Esc/←]",
+                'command': lambda: self.mover_imagem("errado"),
+                'state': tk.DISABLED,
+                'bg_color': Colors.BUTTON_WRONG,
+                'fg_color': "white",
+                'hover_color': Colors.BUTTON_WRONG_HOVER,
+                'expand': True
+            },
+            {
+                'name': 'botao_pular',
+                'text': "Pular\n[Espaço]",
+                'command': self.pular_imagem,
+                'state': tk.DISABLED,
+                'expand': True
+            },
+            {
+                'name': 'botao_pular10',
+                'text': "Pular 10\n[Shift+Espaço]",
+                'command': self.pular_10_imagens,
+                'state': tk.DISABLED,
+                'expand': True
+            }
+        ]
+    
+    def _configurar_todos_botoes(self):
+        """Configura todos os botões da interface usando configuração centralizada"""
+        button_configs = self._get_button_configs()
+        
+        for config in button_configs:
+            self._criar_botao_generico(config)
+    
+    def _criar_botao_generico(self, config):
+        """Cria um botão genérico baseado na configuração fornecida"""
+        # Extrai configurações específicas do botão
+        name = config.pop('name')
+        expand = config.pop('expand', False)
+        
+        # Cria o botão com as configurações restantes
+        button = UIHelpers.create_styled_button(self.frame_botoes, **config)
+        
+        # Aplica o pack layout
+        button.pack(side=tk.LEFT, padx=Padding.BUTTON, pady=0, expand=expand)
+        
+        # Armazena referência do botão na instância
+        setattr(self, name, button)
+    
+    def _criar_label_status(self):
+        """Cria o label de status"""
         self.label_status = tk.Label(
-            self.root, text="Selecione uma pasta para começar a classificar imagens",
+            self.root, text=Messages.SELECT_FOLDER,
             bd=1, relief=tk.SUNKEN, anchor=tk.W,
-            bg=self.status_bg, fg=self.fg_color, font=("Arial", 12)
+            bg=Colors.STATUS_BACKGROUND, fg=Colors.FOREGROUND, font=Fonts.DEFAULT
         )
         self.label_status.pack(side=tk.BOTTOM, fill=tk.X)
-    
-    def configurar_botoes(self):
-        """Configura os botões da interface"""
-        # Botão Voltar
-        self.botao_voltar = tk.Button(
-            self.frame_botoes, text="⟵ Voltar\n[Backspace]", bg="#444", fg=self.fg_color,
-            command=self.voltar_imagem, state=tk.DISABLED,
-            activebackground=self.button_hover, activeforeground=self.fg_color,
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_voltar.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-
-        # Botão de selecionar pasta
-        self.botao_selecionar = tk.Button(
-            self.frame_botoes, text="Selecionar Pasta", command=self.selecionar_pasta,
-            bg=self.bg_color, fg=self.fg_color, activebackground=self.button_hover, activeforeground=self.fg_color,
-            font=("Arial", 14, "bold"), height=2, width=16, relief=tk.RAISED, bd=2
-        )
-        self.botao_selecionar.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-        
-        # Botão para abrir a pasta no explorador
-        self.botao_abrir_pasta = tk.Button(
-            self.frame_botoes, text="Abrir Pasta", command=self.abrir_pasta,
-            bg="#444", fg=self.fg_color, activebackground=self.button_hover, activeforeground=self.fg_color,
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_abrir_pasta.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-
-        # Botão Certo
-        self.botao_certo = tk.Button(
-            self.frame_botoes, text="✔ Certo\n[Enter/→]", bg=self.button_certo_color, fg="white",
-            command=lambda: self.mover_imagem("certo"), state=tk.DISABLED,
-            activebackground="#27ae60", activeforeground="white",
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_certo.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-
-        # Botão Errado
-        self.botao_errado = tk.Button(
-            self.frame_botoes, text="✖ Errado\n[Esc/←]", bg=self.button_errado_color, fg="white",
-            command=lambda: self.mover_imagem("errado"), state=tk.DISABLED,
-            activebackground="#c0392b", activeforeground="white",
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_errado.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-
-        # Botão Pular
-        self.botao_pular = tk.Button(
-            self.frame_botoes, text="Pular\n[Espaço]", bg="#444", fg=self.fg_color,
-            command=self.pular_imagem, state=tk.DISABLED,
-            activebackground=self.button_hover, activeforeground=self.fg_color,
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_pular.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-
-        # Botão Pular 10
-        self.botao_pular10 = tk.Button(
-            self.frame_botoes, text="Pular 10\n[Shift+Espaço]", bg="#444", fg=self.fg_color,
-            command=self.pular_10_imagens, state=tk.DISABLED,
-            activebackground=self.button_hover, activeforeground=self.fg_color,
-            font=("Arial", 14, "bold"), height=2, width=12, relief=tk.RAISED, bd=2
-        )
-        self.botao_pular10.pack(side=tk.LEFT, padx=12, pady=0, expand=True)
-    
-    def configurar_atalhos(self):
-        """Configura os atalhos de teclado"""
-        self.root.bind('<Right>', lambda event: self.mover_imagem("certo") if self.botao_certo['state'] == tk.NORMAL else None)
-        self.root.bind('<Return>', lambda event: self.mover_imagem("certo") if self.botao_certo['state'] == tk.NORMAL else None)
-        self.root.bind('<Left>', lambda event: self.mover_imagem("errado") if self.botao_errado['state'] == tk.NORMAL else None)
-        self.root.bind('<Escape>', lambda event: self.mover_imagem("errado") if self.botao_errado['state'] == tk.NORMAL else None)
-        self.root.bind('<space>', lambda event: self.pular_imagem() if self.botao_pular['state'] == tk.NORMAL else None)
-        self.root.bind('<Shift-space>', lambda event: self.pular_10_imagens() if self.botao_pular10['state'] == tk.NORMAL else None)
-        self.root.bind('<BackSpace>', lambda event: self.voltar_imagem() if self.botao_voltar['state'] == tk.NORMAL else None)
-        self.frame_imagem.bind('<Configure>', lambda event: self.exibir_imagem_atual(redimensionar=True))
     
     def selecionar_pasta(self):
         """Abre diálogo para selecionar pasta e inicializa o gerenciador de imagens"""
@@ -166,48 +176,52 @@ class MainWindow:
             self.atualizar_botoes(True)
             self.exibir_imagem_atual()
         else:
-            messagebox.showinfo("Sem Imagens", "Nenhuma imagem encontrada na pasta selecionada.")
+            ErrorHandler.show_no_images_warning()
     
     def exibir_imagem_atual(self, redimensionar=False):
         """Exibe a imagem atual na interface"""
-        if not self.image_manager.arquivos_imagem:
-            self.label_imagem.config(image=None)
-            self.label_nome_imagem.config(text="")
-            self.atualizar_status_final()
-            self.atualizar_botoes(False)
+        if not self._verificar_imagens_disponiveis():
             return
             
-        # Exibir nome da imagem acima da imagem
+        self._atualizar_nome_imagem()
+        self._carregar_e_exibir_imagem()
+    
+    def _verificar_imagens_disponiveis(self):
+        """Verifica se há imagens disponíveis"""
+        if not self.image_manager.arquivos_imagem:
+            self._limpar_interface()
+            self.atualizar_status_final()
+            self.atualizar_botoes(False)
+            return False
+        return True
+    
+    def _atualizar_nome_imagem(self):
+        """Atualiza o nome da imagem no label"""
         nome_img = self.image_manager.obter_nome_imagem_atual()
         self.label_nome_imagem.config(text=nome_img)
-        
-        # Exibir imagem atual
+    
+    def _carregar_e_exibir_imagem(self):
+        """Carrega e exibe a imagem atual"""
         try:
-            max_width = self.frame_imagem.winfo_width() - 20
-            max_height = self.frame_imagem.winfo_height() - 20
+            max_width = self.frame_imagem.winfo_width() - Padding.IMAGE_FRAME
+            max_height = self.frame_imagem.winfo_height() - Padding.IMAGE_FRAME
             
             self.photo = ImageProcessor.carregar_e_redimensionar(
-                self.image_manager.imagem_atual_caminho, 
-                max_width, 
-                max_height
+                self.image_manager.imagem_atual_caminho, max_width, max_height
             )
             
-            self.label_imagem.config(image=self.photo, bg=self.bg_color)
+            self.label_imagem.config(image=self.photo, bg=Colors.BACKGROUND)
             self.atualizar_status()
         except Exception as e:
-            messagebox.showerror("Erro", f"Não foi possível abrir a imagem: {str(e)}")
-            # Remove a imagem com problema
-            self.image_manager.arquivos_imagem.pop(self.image_manager.indice_atual)
-            if self.image_manager.arquivos_imagem:
-                if self.image_manager.indice_atual >= len(self.image_manager.arquivos_imagem):
-                    self.image_manager.indice_atual = 0
-                self.image_manager.atualizar_imagem_atual()
-                self.exibir_imagem_atual()
-            else:
-                self.label_imagem.config(image=None)
-                self.label_nome_imagem.config(text="")
+            if not ErrorHandler.handle_image_error(e, self.image_manager, self.exibir_imagem_atual):
+                self._limpar_interface()
                 self.atualizar_status_final()
                 self.atualizar_botoes(False)
+    
+    def _limpar_interface(self):
+        """Limpa a interface quando não há mais imagens"""
+        self.label_imagem.config(image=None)
+        self.label_nome_imagem.config(text="")
     
     def atualizar_status(self):
         """Atualiza a barra de status com informações atuais"""
@@ -223,20 +237,26 @@ class MainWindow:
         """Atualiza a barra de status quando todas as imagens foram classificadas"""
         stats = self.image_manager.obter_estatisticas()
         self.label_status.config(
-            text=f"Todas as imagens foram classificadas!   |   Certo: {stats['certo']}   Errado: {stats['errado']}"
+            text=f"{Messages.ALL_CLASSIFIED}   |   Certo: {stats['certo']}   Errado: {stats['errado']}"
         )
+    
+    def _get_interaction_buttons(self):
+        """Retorna lista de botões de interação para controle de estado"""
+        return [
+            self.botao_certo, self.botao_errado, self.botao_pular,
+            self.botao_pular10, self.botao_voltar
+        ]
     
     def atualizar_botoes(self, estado):
         """Ativa ou desativa os botões de interação"""
         novo_estado = tk.NORMAL if estado else tk.DISABLED
-        self.botao_certo.config(state=novo_estado)
-        self.botao_errado.config(state=novo_estado)
-        self.botao_pular.config(state=novo_estado)
-        self.botao_pular10.config(state=novo_estado)
-        self.botao_voltar.config(state=novo_estado)
         
-        # O botão de abrir pasta deve estar ativo se houver uma pasta selecionada
-        self.botao_abrir_pasta.config(state=tk.NORMAL if self.image_manager.pasta_origem else tk.DISABLED)
+        for botao in self._get_interaction_buttons():
+            botao.config(state=novo_estado)
+        
+        self.botao_abrir_pasta.config(
+            state=tk.NORMAL if self.image_manager.pasta_origem else tk.DISABLED
+        )
     
     def mover_imagem(self, destino):
         """Move a imagem atual para a pasta especificada (certo/errado)"""
@@ -244,8 +264,7 @@ class MainWindow:
             if self.image_manager.arquivos_imagem:
                 self.exibir_imagem_atual()
             else:
-                self.label_imagem.config(image=None)
-                self.label_nome_imagem.config(text="")
+                self._limpar_interface()
                 self.atualizar_status_final()
                 self.atualizar_botoes(False)
     
@@ -269,4 +288,4 @@ class MainWindow:
         if self.image_manager.pasta_origem:
             self.image_manager.abrir_pasta_no_explorador()
         else:
-            messagebox.showinfo("Aviso", "Nenhuma pasta foi selecionada ainda.")
+            ErrorHandler.show_no_folder_warning()
