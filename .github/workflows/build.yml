@@ -13,7 +13,7 @@ jobs:
   release:
     runs-on: windows-latest
     env:
-      VERSION: v1.0.1
+      VERSION: v1.0.2
 
     steps:
       # 1) Puxa o código
@@ -56,11 +56,11 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
           body: |
-            # Classificador de Imagens v1.0.1
+            # Classificador de Imagens v1.0.2
             
             --
-            ##  v1.0.1 - Melhorias
-            - Adicionada updater para facilitar atualizações futuras.
+            ##  v1.0.2 - Correção
+            - Corrigido bug no updater de looping de atualização.
 
           draft: false
           prerelease: false

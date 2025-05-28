@@ -7,14 +7,46 @@ import tempfile
 import shutil
 import threading
 from tkinter import messagebox
+from packaging import version
+import json
 
 class AutoUpdater:
     def __init__(self):
         # Configurações do seu repositório GitHub
-        self.repo_owner = "GuilllasDefas"  # Substitua pelo seu usuário
-        self.repo_name = "Classificador"     # Substitua pelo nome do repo
-        self.current_version = "1.0.0"          # Versão atual do app
+        self.repo_owner = "GuilllasDefas"
+        self.repo_name = "Classificador"
         self.debug = True  # ← Ativar/desativar debug
+        
+        # Obtém a versão atual do arquivo version.json
+        self.current_version = self._get_current_version()
+    
+    def _get_current_version(self):
+        """Obtém versão atual do arquivo version.json"""
+        try:
+            # Determina o diretório base (funciona tanto compilado quanto em desenvolvimento)
+            if getattr(sys, 'frozen', False):
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            version_file = os.path.join(base_dir, "version.json")
+            
+            # Se o arquivo não existir, cria com a versão padrão
+            if not os.path.exists(version_file):
+                with open(version_file, 'w') as f:
+                    json.dump({"version": "1.0.2"}, f)
+                return "1.0.2"
+                
+            # Lê a versão do arquivo
+            with open(version_file, 'r') as f:
+                data = json.load(f)
+                return data.get("version", "1.0.2")
+                
+        except Exception as e:
+            if self.debug:
+                print(f"DEBUG: Erro ao ler versão: {e}")
+            # Retorna versão padrão em caso de erro
+            return "1.0.2"
         
     def verificar_atualizacao(self):
         """Verifica se tem atualização disponível"""
@@ -25,22 +57,32 @@ class AutoUpdater:
             
             if response.status_code == 200:
                 release_info = response.json()
-                versao_nova = release_info['tag_name'].replace('v', '')  # Remove 'v' se tiver
+                versao_github = release_info['tag_name']
                 
-                if self.debug:  # ← Adicione estas linhas de debug
-                    print(f"DEBUG: Versão atual: {self.current_version}")
-                    print(f"DEBUG: Versão no GitHub: {versao_nova}")
+                # Remove 'v' se existir e limpa espaços
+                versao_nova = versao_github.replace('v', '').strip()
+                versao_atual = self.current_version.strip()
                 
-                # Compara versões (simplificado)
-                if versao_nova != self.current_version:
-                    if self.debug:
-                        print("DEBUG: Atualização disponível!")
-                    return True, release_info
-                else:
-                    if self.debug:  # ← Esta é a linha que você queria
-                        print("DEBUG: Nenhuma atualização disponível - app está na versão mais recente")
+                if self.debug:
+                    print(f"DEBUG: Versão atual: '{versao_atual}'")
+                    print(f"DEBUG: Versão no GitHub: '{versao_github}' -> '{versao_nova}'")
+                
+                # Compara versões usando packaging
+                try:
+                    if version.parse(versao_nova) > version.parse(versao_atual):
+                        if self.debug:
+                            print("DEBUG: Atualização disponível!")
+                        return True, release_info
+                    else:
+                        if self.debug:
+                            print("DEBUG: Nenhuma atualização disponível - app está na versão mais recente")
+                        return False, None
+                except:
+                    # Se der erro no parse, faz comparação simples
+                    if versao_nova != versao_atual:
+                        return True, release_info
                     return False, None
-                    
+                
             else:
                 if self.debug:
                     print(f"DEBUG: Erro HTTP {response.status_code} ao verificar atualizações")
@@ -49,8 +91,6 @@ class AutoUpdater:
         except Exception as e:
             if self.debug:
                 print(f"DEBUG: Erro ao verificar atualização: {e}")
-            else:
-                print(f"Erro ao verificar atualização: {e}")  # Esta linha já existia
             return False, None
     
     def perguntar_se_quer_atualizar(self, release_info):
@@ -112,7 +152,10 @@ class AutoUpdater:
         if getattr(sys, 'frozen', False):
             pasta_atual = os.path.dirname(sys.executable)
         else:
-            pasta_atual = os.path.dirname(os.path.abspath(__file__))
+            pasta_atual = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        # Obtém a versão da nova release do arquivo de workflow
+        nova_versao = self._extrair_versao_do_workflow(pasta_nova_versao)
         
         # Cria script Python temporário
         script_path = os.path.join(tempfile.gettempdir(), "atualizar_app.py")
@@ -122,6 +165,7 @@ import time
 import shutil
 import os
 import subprocess
+import json
 
 # Espera 3 segundos para o app fechar completamente
 time.sleep(3)
@@ -129,6 +173,7 @@ time.sleep(3)
 try:
     pasta_nova = r"{pasta_nova_versao}"
     pasta_app = r"{pasta_atual}"
+    nova_versao = "{nova_versao}"
     
     # Copia todos os arquivos novos
     for item in os.listdir(pasta_nova):
@@ -141,6 +186,11 @@ try:
             if os.path.exists(destino):
                 shutil.rmtree(destino)
             shutil.copytree(origem, destino)
+    
+    # Atualiza o arquivo de versão
+    version_file = os.path.join(pasta_app, "version.json")
+    with open(version_file, 'w') as f:
+        json.dump({{"version": nova_versao}}, f)
     
     # Reinicia o aplicativo
     exe_path = os.path.join(pasta_app, "Classificador de Imagens.exe")
@@ -158,3 +208,24 @@ except Exception as e:
         # Executa o script
         subprocess.Popen([sys.executable, script_path], 
                         creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0)
+    
+    def _extrair_versao_do_workflow(self, pasta_nova):
+        """Extrai a versão do arquivo de workflow"""
+        try:
+            # Tenta encontrar a versão no build.yml
+            workflow_path = os.path.join(pasta_nova, ".github", "workflows", "build.yml")
+            if os.path.exists(workflow_path):
+                with open(workflow_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # Procura pela linha com VERSION: vX.X.X
+                    import re
+                    match = re.search(r'VERSION:\s*v?([0-9]+\.[0-9]+\.[0-9]+)', content)
+                    if match:
+                        return match.group(1)
+                        
+            # Se não encontrar, usa a versão do nome do release
+            return self.current_version  # Mantém a versão atual se não encontrar
+        except Exception as e:
+            if self.debug:
+                print(f"DEBUG: Erro ao extrair versão do workflow: {e}")
+            return self.current_version
