@@ -1,6 +1,11 @@
 import requests
 import os
+import zipfile
+import subprocess
 import sys
+import tempfile
+import shutil
+import threading
 from tkinter import messagebox
 from packaging import version
 import json

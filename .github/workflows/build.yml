@@ -121,13 +121,9 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: Classificador de Imagens ${{ env.VERSION }}
           body: |           
-            ##  v1.1.1 - Correção
+            ##  v1.1.2 - Correção
 
-            - Ao invés de tentar atualizar, é exibido o link para o download de nova versão
-            
-            ### Downloads Disponíveis:
-            - **Setup.exe**: Instalador completo com desinstalador automático
-            - **ZIP**: Versão portátil (extrair e executar)
+            - Mais uma vez tentando corrigir versionamento
 
           draft: false
           prerelease: false
