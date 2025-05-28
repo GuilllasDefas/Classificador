@@ -2,6 +2,8 @@ import tkinter as tk
 import sys
 import os
 import threading
+import tkinter.messagebox
+import webbrowser  # Adicionar esta importação
 
 # Adiciona o diretório atual ao path para importar os módulos
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -25,9 +27,51 @@ def verificar_atualizacoes_em_background(root):
     thread.start()
 
 def processar_atualizacao(updater, release_info):
-    """Processa a atualização na thread principal"""
+    """Processa a atualização na thread principal mostrando apenas um link clicável"""
     if updater.perguntar_se_quer_atualizar(release_info):
-        updater.baixar_e_instalar(release_info)
+        url = release_info.get('download_url', release_info.get('html_url', 'https://github.com/GuilllasDefas/Classificador/releases'))
+        
+        # Criar janela de diálogo simplificada com link clicável
+        dialog = tk.Toplevel()
+        dialog.title("Nova versão disponível")
+        dialog.geometry("400x120")
+        dialog.configure(bg="#23272e")
+        dialog.resizable(False, False)
+        
+        # Adicionar mensagem
+        tk.Label(dialog, text="Uma nova versão está disponível!", 
+                 bg="#23272e", fg="white", font=("Arial", 12, "bold")).pack(pady=(15, 5))
+        
+        # Função para abrir o link
+        def abrir_link(event=None):
+            webbrowser.open_new(url)
+            dialog.destroy()
+        
+        # Adicionar instrução
+        tk.Label(dialog, text="Clique no link abaixo para baixar:", 
+                 bg="#23272e", fg="white").pack(pady=(0, 5))
+        
+        # Adicionar link clicável (estilizado como link)
+        link_label = tk.Label(dialog, text=url, fg="#3498db", cursor="hand2",
+                            bg="#23272e", font=("Arial", 10, "underline"))
+        link_label.pack(pady=5)
+        link_label.bind("<Button-1>", abrir_link)
+        
+        # Adicionar botão de fechar (X) no título
+        dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
+        
+        # Centralizar diálogo
+        dialog.transient()
+        dialog.focus_set()
+        dialog.grab_set()
+
+def testar_atualizacao(root):
+    """Função para testar o diálogo de atualização"""
+    updater = AutoUpdater(modo_teste=True)
+    tem_atualizacao, release_info = updater.verificar_atualizacao()
+    
+    if tem_atualizacao:
+        processar_atualizacao(updater, release_info)
 
 def main():
     """Função principal para iniciar o aplicativo"""
@@ -42,7 +86,10 @@ def main():
     root.configure(bg="#23272e")
     app = MainWindow(root)
     
-    # Verifica atualizações 3 segundos após abrir (para não atrasar a abertura)
+    # Para testes: Descomente a linha abaixo e comente a verificação normal
+    #root.after(1000, lambda: testar_atualizacao(root))
+    
+    # Verificação normal (deixe comentado ao testar)
     root.after(3000, lambda: verificar_atualizacoes_em_background(root))
     
     root.mainloop()

@@ -13,7 +13,7 @@ jobs:
   release:
     runs-on: windows-latest
     env:
-      VERSION: v1.1.0
+      VERSION: v1.1.1
 
     steps:
       # 1) Puxa o código
@@ -56,8 +56,9 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: Classificador de Imagens ${{ env.VERSION }}
           body: |           
-            ##  v1.1.0- Correção
-            - Corrigido bug no updater de looping de atualização.
+            ##  v1.1.1 - Correção
+
+            - Ao invés de tentar atualizar, é exibido o link para o download de nova versão
 
           draft: false
           prerelease: false
