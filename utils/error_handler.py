@@ -1,7 +1,7 @@
 """Manipulador de erros da aplicação"""
 
 from tkinter import messagebox
-from constants.app_constants import Messages
+from utils.app_constants import Messages
 
 class ErrorHandler:
     """Classe para gerenciar erros da aplicação"""

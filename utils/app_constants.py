@@ -9,16 +9,22 @@ class WindowConfig:
 class Colors:
     """Cores da interface"""
     BACKGROUND = "#23272e"
-    FOREGROUND = "#f0f0f0"
-    BUTTON_CORRECT = "#2ecc40"
-    BUTTON_WRONG = "#e74c3c"
-    BUTTON_CORRECT_HOVER = "#27ae60"
-    BUTTON_WRONG_HOVER = "#c0392b"
-    BUTTON_HOVER = "#555"
-    BUTTON_NEUTRAL = "#444"
-    STATUS_BACKGROUND = "#181a1b"
-    IMAGE_LABEL_BACKGROUND = "#181a1b"
-    IMAGE_LABEL_FOREGROUND = "#ffd700"
+    FOREGROUND = "#ffffff"
+    BUTTON_BACKGROUND = "#373e4c"
+    BUTTON_HOVER = "#4d5565"
+    BUTTON_CORRECT = "#28a745"
+    BUTTON_CORRECT_HOVER = "#218838"
+    BUTTON_WRONG = "#dc3545"
+    BUTTON_WRONG_HOVER = "#c82333"
+    STATUS_BACKGROUND = "#1c1f26"
+    IMAGE_LABEL_BACKGROUND = "#1c1f26"
+    IMAGE_LABEL_FOREGROUND = "#dcdfe4"
+    
+    # Novas cores para botões especiais
+    BUTTON_SPECIAL = "#17a2b8"  # Azul turquesa
+    BUTTON_SPECIAL_HOVER = "#138496"  # Azul turquesa mais escuro
+    DIALOG_BACKGROUND = "#282c34"  # Fundo do diálogo
+    DIALOG_FRAME = "#21252b"  # Frames dentro do diálogo
 
 class Fonts:
     """Configurações de fontes"""

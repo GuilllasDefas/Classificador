@@ -1,14 +1,14 @@
 """Funções auxiliares para a interface do usuário"""
 
 import tkinter as tk
-from constants.app_constants import Colors, Fonts, ButtonConfig
+from utils.app_constants import Colors, Fonts, ButtonConfig
 
 class UIHelpers:
     """Classe com métodos auxiliares para UI"""
     
     @staticmethod
     def create_styled_button(parent, text, command=None, state=tk.NORMAL, 
-                           bg_color=Colors.BUTTON_NEUTRAL, fg_color=Colors.FOREGROUND,
+                           bg_color=Colors.BUTTON_SPECIAL, fg_color=Colors.FOREGROUND,
                            hover_color=Colors.BUTTON_HOVER, width=None):
         """Cria um botão com estilo padrão"""
         button_config = {

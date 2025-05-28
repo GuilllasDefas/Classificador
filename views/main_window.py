@@ -7,10 +7,11 @@ from models.image_manager import ImageManager
 from utils.image_utils import ImageProcessor
 from utils.ui_helpers import UIHelpers
 from utils.error_handler import ErrorHandler
-from mixins.keyboard_mixin import KeyboardMixin
-from constants.app_constants import (
+from utils.keyboard_mixin import KeyboardMixin
+from utils.app_constants import (
     WindowConfig, Colors, Fonts, Padding, ButtonConfig, Messages
 )
+from views.sampling_dialog import SamplingDialog  # Adicionando a importação necessária
 
 def resource_path(relative_path):
     """Obter caminho absoluto para recurso, funciona para dev e para PyInstaller"""
@@ -51,6 +52,7 @@ class MainWindow(KeyboardMixin):
         self._criar_label_nome_imagem()
         self._criar_frame_imagem()
         self._criar_frame_botoes()
+        self._criar_botao_amostragem()  # Adiciona o botão de amostragem
         self._criar_label_status()
     
     def _criar_label_nome_imagem(self):
@@ -75,6 +77,37 @@ class MainWindow(KeyboardMixin):
         self.frame_botoes = UIHelpers.create_styled_frame(self.root)
         self.frame_botoes.pack(fill=tk.X, padx=Padding.MAIN, pady=(0, 25))
         self._configurar_todos_botoes()
+    
+    def _criar_botao_amostragem(self):
+        """Cria o botão para abrir o diálogo de amostragem"""
+        frame_amostragem = UIHelpers.create_styled_frame(self.root)
+        frame_amostragem.pack(fill=tk.X, padx=Padding.MAIN, pady=(0, 10))
+        
+        # Criar um separador para diferenciar visualmente 
+        separator = tk.Frame(frame_amostragem, height=1, bg="#1c1f26")
+        separator.pack(fill=tk.X, pady=5)
+        
+        # Cria um label explicativo
+        label_amostragem = tk.Label(
+            frame_amostragem,
+            text="Ferramentas adicionais:",
+            font=Fonts.DEFAULT,
+            bg=Colors.BACKGROUND,
+            fg=Colors.FOREGROUND
+        )
+        label_amostragem.pack(side=tk.LEFT, padx=Padding.BUTTON, pady=5)
+        
+        # Adiciona o botão de amostragem
+        self.botao_amostragem = UIHelpers.create_styled_button(
+            frame_amostragem,
+            text="Gerar Amostragem para Auditoria",
+            command=self.abrir_dialogo_amostragem,
+            bg_color="#17a2b8",  # Cor azul turquesa para destacar
+            fg_color="white",
+            hover_color="#138496",
+            width=30
+        )
+        self.botao_amostragem.pack(side=tk.LEFT, padx=Padding.BUTTON, pady=5)
     
     def _get_button_configs(self):
         """Retorna configuração centralizada de todos os botões"""
@@ -289,3 +322,7 @@ class MainWindow(KeyboardMixin):
             self.image_manager.abrir_pasta_no_explorador()
         else:
             ErrorHandler.show_no_folder_warning()
+    
+    def abrir_dialogo_amostragem(self):
+        """Abre o diálogo para configurar a amostragem de imagens"""
+        SamplingDialog(self.root)
