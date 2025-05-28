@@ -1,11 +1,6 @@
 import requests
 import os
-import zipfile
-import subprocess
 import sys
-import tempfile
-import shutil
-import threading
 from tkinter import messagebox
 from packaging import version
 import json
@@ -26,28 +21,52 @@ class AutoUpdater:
         try:
             # Determina o diretório base (funciona tanto compilado quanto em desenvolvimento)
             if getattr(sys, 'frozen', False):
+                # Quando executado como .exe, o PyInstaller cria um diretório temporário
+                # Mas os arquivos de dados ficam junto com o executável
                 base_dir = os.path.dirname(sys.executable)
+                if self.debug:
+                    print(f"DEBUG: Executando como .exe, base_dir: {base_dir}")
             else:
+                # Quando executado como script Python
                 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if self.debug:
+                    print(f"DEBUG: Executando como script, base_dir: {base_dir}")
             
             version_file = os.path.join(base_dir, "version.json")
             
+            if self.debug:
+                print(f"DEBUG: Procurando version.json em: {version_file}")
+                print(f"DEBUG: Arquivo existe? {os.path.exists(version_file)}")
+                if os.path.exists(base_dir):
+                    print(f"DEBUG: Arquivos no diretório base: {os.listdir(base_dir)}")
+            
             # Se o arquivo não existir, cria com a versão padrão
             if not os.path.exists(version_file):
-                with open(version_file, 'w') as f:
-                    json.dump({"version": "1.0.2"}, f)
-                return "1.1.0"
+                if self.debug:
+                    print("DEBUG: version.json não encontrado, criando com versão padrão")
+                default_version = {"version": "1.0.0"}
+                try:
+                    with open(version_file, 'w') as f:
+                        json.dump(default_version, f, indent=2)
+                    return "1.0.0"
+                except:
+                    if self.debug:
+                        print("DEBUG: Não foi possível criar version.json, usando versão padrão")
+                    return "1.0.0"
                 
             # Lê a versão do arquivo
-            with open(version_file, 'r') as f:
+            with open(version_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get("version", "1.0.2")
+                versao = data.get("version", "1.0.0")
+                if self.debug:
+                    print(f"DEBUG: Versão lida do arquivo: {versao}")
+                return versao
                 
         except Exception as e:
             if self.debug:
                 print(f"DEBUG: Erro ao ler versão: {e}")
             # Retorna versão padrão em caso de erro
-            return "1.1.0"
+            return "1.0.0"
         
     def verificar_atualizacao(self):
         """Verifica se tem atualização disponível"""
@@ -128,6 +147,3 @@ class AutoUpdater:
         )
         
         return resposta
-        
-    # Os métodos abaixo não são mais necessários, pois o download será feito manualmente pelo usuário
-    # através do link que será mostrado na interface
