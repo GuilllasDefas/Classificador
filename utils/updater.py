@@ -106,8 +106,10 @@ class AutoUpdater:
                 
                 # Encontra a URL de download do ZIP
                 for asset in release_info.get('assets', []):
-                    if asset['name'].endswith('.zip'):
-                        release_info['download_url'] = asset['browser_download_url']
+                    if asset['name'].endswith('.exe'):
+                        download_url = asset['browser_download_url']
+                        if self.debug:
+                            print(f"DEBUG: Encontrado arquivo .exe: {asset['name']}")
                         break
                 
                 # Se não encontrou ZIP específico, usa a URL da release

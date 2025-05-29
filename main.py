@@ -34,7 +34,7 @@ def processar_atualizacao(updater, release_info):
         # Criar janela de diálogo simplificada com link clicável
         dialog = tk.Toplevel()
         dialog.title("Nova versão disponível")
-        dialog.geometry("400x120")
+        dialog.geometry("500x120")
         dialog.configure(bg="#23272e")
         dialog.resizable(False, False)
         

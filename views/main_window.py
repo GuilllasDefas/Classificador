@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import os
 import sys
+import json
 
 from models.image_manager import ImageManager
 from utils.image_utils import ImageProcessor
@@ -32,9 +33,37 @@ class MainWindow(KeyboardMixin):
         self._configurar_interface()
         self.configurar_atalhos()
     
+    def _get_current_version(self):
+        """Obtém versão atual do arquivo version.json"""
+        try:
+            # Determina o diretório base (funciona tanto compilado quanto em desenvolvimento)
+            if getattr(sys, 'frozen', False):
+                # Quando executado como .exe
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                # Quando executado como script Python
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            version_file = os.path.join(base_dir, "version.json")
+            
+            # Se o arquivo não existir, retorna versão padrão
+            if not os.path.exists(version_file):
+                return "1.0.0"
+                
+            # Lê a versão do arquivo
+            with open(version_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("version", "1.0.0")
+                
+        except Exception:
+            # Retorna versão padrão em caso de erro
+            return "1.0.0"
+    
     def _configurar_janela(self):
         """Configura as propriedades básicas da janela"""
-        self.root.title(WindowConfig.TITLE)
+        version = self._get_current_version()
+        title_with_version = f"{WindowConfig.TITLE} - v{version}"
+        self.root.title(title_with_version)
         self.root.geometry(WindowConfig.GEOMETRY)
         self.root.resizable(True, True)
         self._carregar_icone()
