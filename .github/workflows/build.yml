@@ -13,7 +13,11 @@ jobs:
   release:
     runs-on: windows-latest
     env:
+<<<<<<< HEAD
       VERSION: v1.1.3
+=======
+      VERSION: v1.1.2
+>>>>>>> bea2542dfbcabc018a366764d80486582d7701de
 
     steps:
       # 1) Puxa o código
