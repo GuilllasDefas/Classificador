@@ -7,7 +7,6 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets/icon.ico', 'assets'), 
-        ('version.json', '.'),
         ('docs', 'docs')
     ],
     hiddenimports=['pillow', 'packaging', 'packaging.version'],

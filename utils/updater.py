@@ -8,71 +8,21 @@ import shutil
 import threading
 from tkinter import messagebox
 from packaging import version
-import json
+from config.app_config import APP_VERSION, REPO_OWNER, REPO_NAME
 
 class AutoUpdater:
     def __init__(self, modo_teste=False):
         # Configurações do seu repositório GitHub
-        self.repo_owner = "GuilllasDefas"
-        self.repo_name = "Classificador"
+        self.repo_owner = REPO_OWNER
+        self.repo_name = REPO_NAME
         self.debug = True  # ← Ativar/desativar debug
         self.modo_teste = modo_teste  # Novo parâmetro para teste
         
-        # Obtém a versão atual do arquivo version.json
-        self.current_version = self._get_current_version()
+        # Obtém a versão atual da configuração centralizada
+        self.current_version = APP_VERSION
+        if self.debug:
+            print(f"DEBUG: Versão atual carregada: {self.current_version}")
     
-    def _get_current_version(self):
-        """Obtém versão atual do arquivo version.json"""
-        try:
-            # Determina o diretório base (funciona tanto compilado quanto em desenvolvimento)
-            if getattr(sys, 'frozen', False):
-                # Quando executado como .exe, o PyInstaller cria um diretório temporário
-                # Mas os arquivos de dados ficam junto com o executável
-                base_dir = os.path.dirname(sys.executable)
-                if self.debug:
-                    print(f"DEBUG: Executando como .exe, base_dir: {base_dir}")
-            else:
-                # Quando executado como script Python
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                if self.debug:
-                    print(f"DEBUG: Executando como script, base_dir: {base_dir}")
-            
-            version_file = os.path.join(base_dir, "version.json")
-            
-            if self.debug:
-                print(f"DEBUG: Procurando version.json em: {version_file}")
-                print(f"DEBUG: Arquivo existe? {os.path.exists(version_file)}")
-                if os.path.exists(base_dir):
-                    print(f"DEBUG: Arquivos no diretório base: {os.listdir(base_dir)}")
-            
-            # Se o arquivo não existir, cria com a versão padrão
-            if not os.path.exists(version_file):
-                if self.debug:
-                    print("DEBUG: version.json não encontrado, criando com versão padrão")
-                default_version = {"version": "1.0.0"}
-                try:
-                    with open(version_file, 'w') as f:
-                        json.dump(default_version, f, indent=2)
-                    return "1.0.0"
-                except:
-                    if self.debug:
-                        print("DEBUG: Não foi possível criar version.json, usando versão padrão")
-                    return "1.0.0"
-                
-            # Lê a versão do arquivo
-            with open(version_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                versao = data.get("version", "1.0.0")
-                if self.debug:
-                    print(f"DEBUG: Versão lida do arquivo: {versao}")
-                return versao
-                
-        except Exception as e:
-            if self.debug:
-                print(f"DEBUG: Erro ao ler versão: {e}")
-            # Retorna versão padrão em caso de erro
-            return "1.0.0"
-        
     def verificar_atualizacao(self):
         """Verifica se tem atualização disponível"""
         # Se estiver em modo de teste, simula uma atualização
@@ -81,8 +31,8 @@ class AutoUpdater:
                 print("DEBUG: Usando modo de teste - simulando atualização")
             return True, {
                 'tag_name': 'v9.9.9',
-                'html_url': 'https://github.com/GuilllasDefas/Classificador/releases/latest',
-                'download_url': 'https://github.com/GuilllasDefas/Classificador/releases/latest',
+                'html_url': f'https://github.com/{self.repo_owner}/{self.repo_name}/releases/latest',
+                'download_url': f'https://github.com/{self.repo_owner}/{self.repo_name}/releases/latest',
                 'body': 'Esta é uma versão de teste simulada para verificar a funcionalidade.'
             }
             
@@ -104,7 +54,10 @@ class AutoUpdater:
                     print(f"DEBUG: Versão atual: '{versao_atual}'")
                     print(f"DEBUG: Versão no GitHub: '{versao_github}' -> '{versao_nova}'")
                 
-                # Encontra a URL de download do ZIP
+                # Encontra a URL de download - prioriza .exe, depois .zip
+                download_url = None
+                
+                # Primeiro procura por arquivo .exe
                 for asset in release_info.get('assets', []):
                     if asset['name'].endswith('.exe'):
                         download_url = asset['browser_download_url']
@@ -112,9 +65,22 @@ class AutoUpdater:
                             print(f"DEBUG: Encontrado arquivo .exe: {asset['name']}")
                         break
                 
-                # Se não encontrou ZIP específico, usa a URL da release
-                if 'download_url' not in release_info:
+                # Se não encontrou .exe, procura por .zip
+                if not download_url:
+                    for asset in release_info.get('assets', []):
+                        if asset['name'].endswith('.zip'):
+                            download_url = asset['browser_download_url']
+                            if self.debug:
+                                print(f"DEBUG: Encontrado arquivo .zip: {asset['name']}")
+                            break
+                
+                # Define a URL de download ou usa a URL da release como fallback
+                if download_url:
+                    release_info['download_url'] = download_url
+                else:
                     release_info['download_url'] = release_info.get('html_url')
+                    if self.debug:
+                        print("DEBUG: Nenhum arquivo .exe ou .zip encontrado, usando URL da release")
                 
                 # Compara versões usando packaging
                 try:
