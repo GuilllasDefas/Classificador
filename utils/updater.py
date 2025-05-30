@@ -1,11 +1,4 @@
 import requests
-import os
-import zipfile
-import subprocess
-import sys
-import tempfile
-import shutil
-import threading
 from tkinter import messagebox
 from packaging import version
 from config.app_config import APP_VERSION, REPO_OWNER, REPO_NAME
@@ -25,18 +18,6 @@ class AutoUpdater:
     
     def verificar_atualizacao(self):
         """Verifica se tem atualização disponível"""
-        # Se estiver em modo de teste, simula uma atualização
-        if self.modo_teste:
-            if self.debug:
-                print("DEBUG: Usando modo de teste - simulando atualização")
-            return True, {
-                'tag_name': 'v9.9.9',
-                'html_url': f'https://github.com/{self.repo_owner}/{self.repo_name}/releases/latest',
-                'download_url': f'https://github.com/{self.repo_owner}/{self.repo_name}/releases/latest',
-                'body': 'Esta é uma versão de teste simulada para verificar a funcionalidade.'
-            }
-            
-        # Código original para verificação real
         try:
             # Pega informações da última release do GitHub
             url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/releases/latest"

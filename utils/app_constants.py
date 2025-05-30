@@ -21,8 +21,8 @@ class Colors:
     IMAGE_LABEL_FOREGROUND = "#dcdfe4"
     
     # Novas cores para botões especiais
-    BUTTON_SPECIAL = "#17a2b8"  # Azul turquesa
-    BUTTON_SPECIAL_HOVER = "#138496"  # Azul turquesa mais escuro
+    BUTTON_SPECIAL = "#0f8496"  # Azul turquesa
+    BUTTON_SPECIAL_HOVER = "#0d6c7a"  # Azul turquesa mais escuro
     DIALOG_BACKGROUND = "#282c34"  # Fundo do diálogo
     DIALOG_FRAME = "#21252b"  # Frames dentro do diálogo
 

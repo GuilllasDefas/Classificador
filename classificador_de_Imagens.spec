@@ -7,13 +7,20 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets/icon.ico', 'assets'), 
-        ('docs', 'docs')
     ],
-    hiddenimports=['pillow', 'packaging', 'packaging.version'],
+    hiddenimports=[
+        'pillow', 
+        'packaging', 
+        'packaging.version'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['pyinstaller', 'blue', 'isort'],
+    excludes=[
+        'pyinstaller', 
+        'blue', 
+        'isort'
+    ],
     noarchive=False,
     optimize=2,
 )

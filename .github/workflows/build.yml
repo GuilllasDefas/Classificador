@@ -1,13 +1,12 @@
-permissions:
-  contents: write
-
-# .github/workflows/build.yml
 name: Build e Release
 
 on:
   push:
     branches:
       - main
+
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -38,6 +37,37 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      # 4.5) Instala UPX para compressão de executáveis
+      - name: Install UPX
+        run: |
+          # Baixar UPX
+          $upxUrl = "https://github.com/upx/upx/releases/download/v5.0.1/upx-5.0.1-win64.zip"
+          $upxZip = "upx.zip"
+          $upxDir = "upx"
+          
+          Write-Host "Baixando UPX..."
+          Invoke-WebRequest -Uri $upxUrl -OutFile $upxZip
+          
+          Write-Host "Extraindo UPX..."
+          Expand-Archive -Path $upxZip -DestinationPath $upxDir -Force
+          
+          # Encontrar o executável do UPX
+          $upxExePath = Get-ChildItem -Path $upxDir -Recurse -File -Filter "upx.exe" | Select-Object -First 1 -ExpandProperty FullName
+          $upxDirPath = Split-Path -Parent $upxExePath
+          
+          Write-Host "Caminho do UPX: $upxDirPath"
+          
+          # Adicionar ao PATH
+          $env:PATH = "$upxDirPath;$env:PATH"
+          
+          # Salvar no GITHUB_PATH para próximos steps
+          Add-Content $env:GITHUB_PATH $upxDirPath
+          
+          # Verificar se UPX foi instalado corretamente
+          & "$upxExePath" --version
+          
+          Write-Host "UPX instalado e configurado com sucesso!"
+
       # 5) Gera o .exe usando o arquivo .spec
       - name: Build EXE com arquivo .spec
         run: pyinstaller "classificador_de_Imagens.spec"
@@ -67,7 +97,7 @@ jobs:
           LicenseFile=
           OutputDir=setup-output
           OutputBaseFilename=Classificador-de-Imagens-Setup-${{ steps.get_version.outputs.VERSION }}
-          SetupIconFile=assets\icon.ico
+          SetupIconFile="assets\icon.ico"
           Compression=lzma
           SolidCompression=yes
           WizardStyle=modern
@@ -144,15 +174,12 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           release_name: Classificador de Imagens ${{ steps.get_version.outputs.VERSION }}
           body: |           
-            ##  v1.1.3 - Correção e Melhorias
+            ##  v${{ steps.get_version.outputs.VERSION }} - Correção e Melhorias
 
-            - O Update agora puxa o link do instalador
-            - Janela de Update é maior para ver o link de Update
-            - A versão agora é exibida no título da UI
-            - Linkar o ícone ao setup.exe
+            - Otimização do tamanho da aplicação
+            - Ajuste de cores
             
-
-          draft: false
+          draft: true
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

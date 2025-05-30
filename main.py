@@ -85,11 +85,8 @@ def main():
     root = tk.Tk()
     root.configure(bg="#23272e")
     app = MainWindow(root)
-    
-    # Para testes: Descomente a linha abaixo e comente a verificação normal
-    #root.after(1000, lambda: testar_atualizacao(root))
-    
-    # Verificação normal (deixe comentado ao testar)
+
+    # Verificação normal
     root.after(3000, lambda: verificar_atualizacoes_em_background(root))
     
     root.mainloop()
