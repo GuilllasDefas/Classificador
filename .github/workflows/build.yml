@@ -174,12 +174,12 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           release_name: Classificador de Imagens ${{ steps.get_version.outputs.VERSION }}
           body: |           
-            ##  v${{ steps.get_version.outputs.VERSION }} - Correção e Melhorias
+            ##  ${{ steps.get_version.outputs.VERSION }} - Correção e Melhorias
 
             - Otimização do tamanho da aplicação
             - Ajuste de cores
             
-          draft: true
+          draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
